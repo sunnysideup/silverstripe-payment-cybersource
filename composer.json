@@ -1,5 +1,5 @@
 {
-  "name": "jq",
+  "name": "sunnysideup/payment-cybersource",
   "description": "allow payment with e-commerce using Cybersource",
   "type": "silverstripe-vendormodule",
   "keywords": [
