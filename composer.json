@@ -35,10 +35,10 @@
   ],
   "authors": [
     {
-      "name": "Nicolaas Thiemen Francken",
-      "email": "modules@sunnysideup.co.nz",
-      "role": "lead developer"
-    }
+      "name": "Siôn Grabham-Madden",
+      "email": "sion@sunnysideup.co.nz",
+      "role": "developer"
+  }
   ],
   "minimum-stability": "dev",
   "prefer-stable": true
