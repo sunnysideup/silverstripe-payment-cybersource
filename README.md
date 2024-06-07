@@ -25,7 +25,7 @@ See [composer.json](composer.json) for details.
 ## Installation
 
 ```shell
-composer require jq
+composer require sunnysideup/silverstripe-payment-cybersource
 ```
 
 ### Configuration

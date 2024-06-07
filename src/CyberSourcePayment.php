@@ -164,7 +164,7 @@ class CyberSourcePayment extends EcommercePayment
             $currency = EcommercePayment::site_currency();
         }
 
-        $url = $this->buildURL();
+        $url = $this->getURL();
         $params = $this->getParams($amount, $currency);
         $csform = $this->CyberSourceForm($url, $params);
 
