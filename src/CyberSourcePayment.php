@@ -86,7 +86,7 @@ class CyberSourcePayment extends EcommercePayment
         ];
 
         $signature = $this->sign($initialParams);
-        $initialParams[] = $signature;
+        $initialParams['signature'] = $signature;
 
         return $initialParams;
     }
