@@ -1,0 +1,7 @@
+---
+Name: paymentcybersourceroutes
+After: framework/routes#coreroutes
+---
+SilverStripe\Control\Director:
+  rules:
+    cybersourcepayment//$Action/$ID: Sunnysideup\PaymentCyberSource\CyberSourcePaymentController

@@ -14,15 +14,14 @@ use SilverStripe\Core\Environment;
 class CyberSourcePaymentController extends Controller
 {
     private static $allowed_actions = [
-        'paid',
         'returned',
     ];
 
     private static $url_segment = 'cybersourcepayment';
 
-    public function paid()
+    public function returned()
     {
-        $id = $_REQUEST['transaction_id'];
+        $id = $_REQUEST['req_transaction_uuid'];
         $reasonCode = $_REQUEST['reason_code'];
         $authAmount = $_REQUEST['auth_amount'];
         $currency = $_REQUEST['req_currency'];
@@ -30,7 +29,10 @@ class CyberSourcePaymentController extends Controller
         /** @var CyberSourcePayment $payment */
         $payment = CyberSourcePayment::get_by_id($id);
 
-        if ($payment && $this->signatureCheck($_REQUEST)) {
+        if (!$this->signatureCheck($_REQUEST)) {
+            user_error('Transaction signature is incorrect', E_USER_WARNING);
+        }
+        else if ($payment) {
             if (100 === intval($reasonCode)) {
                 $payment->Status = EcommercePayment::SUCCESS_STATUS;
             } else {
@@ -40,20 +42,6 @@ class CyberSourcePaymentController extends Controller
             $payment->SettlementAmount->Amount = $authAmount;
             $payment->SettlementAmount->Currency = $currency;
             $payment->write();
-        }
-    }
-
-    public function returned()
-    {
-        $id = $_REQUEST['transaction_id'];
-
-        /** @var CyberSourcePayment $payment */
-        $payment = CyberSourcePayment::get_by_id($id);
-
-        if (!$this->signatureCheck($_REQUEST)) {
-            user_error('Transaction signature is incorrect', E_USER_WARNING);
-        }
-        else if ($payment) {
             $payment->redirectToOrder();
         } else {
             user_error('could not find payment with matching ID', E_USER_WARNING);
