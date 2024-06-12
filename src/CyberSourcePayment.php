@@ -119,7 +119,8 @@ class CyberSourcePayment extends EcommercePayment
                 document.addEventListener("DOMContentLoaded", function() {
                     document.getElementById("submit").click();
                 });
-            </script>';
+            </script>
+            <style>#submit { display: none; }</style>';
 
         return DBField::create_field(
             'HTMLText',
