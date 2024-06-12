@@ -116,8 +116,8 @@ class CyberSourcePayment extends EcommercePayment
             '<input type="submit" id="submit" value="Confirm"/>
             </form>
             <script type="text/javascript">
-                jQuery(document).ready(function() {
-                    jQuery("#payment_confirmation").submit();
+                document.addEventListener("DOMContentLoaded", function() {
+                    document.getElementById("submit").click();
                 });
             </script>';
 
