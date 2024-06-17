@@ -53,8 +53,10 @@ class CyberSourcePayment extends EcommercePayment
      */
     private static $default_status = EcommercePayment::PENDING_STATUS;
 
-
     private static $email_debug = false;
+
+    private static $logo = 'sunnysideup/payment-cybersource: client/images/cybersourcelogo.png';
+
 
     // --- SECURITY ---
     protected function sign($params) {
@@ -94,8 +96,14 @@ class CyberSourcePayment extends EcommercePayment
     // --- FORMS ---
     public function getPaymentFormFields($amount = 0, ?Order $order = null): FieldList
     {
-        // TODO: LOGO GOES HERE
+        $logo = $this->config()->get('logo');
+        $src = ModuleResourceLoader::singleton()->resolveURL($logo);
+
         return new FieldList(
+            new LiteralField('CybersourceLogo', DBField::create_field(
+                'HTMLText',
+                '<img src="' . $src . '" alt="Credit card payments powered by Cybersource"/>'
+            ))
         );
     }
 
