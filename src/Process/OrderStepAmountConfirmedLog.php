@@ -14,7 +14,7 @@ use Sunnysideup\Ecommerce\Model\Process\OrderStatusLog;
  */
 class OrderStepAmountConfirmedLog extends OrderStatusLog
 {
-    private static $table_name = 'OrderStepAmountConfirmedLog';
+    private static $table_name = 'OrderStepAmountConfirmedLogCS';
 
     private static $db = [
         'IsValid' => 'Boolean',

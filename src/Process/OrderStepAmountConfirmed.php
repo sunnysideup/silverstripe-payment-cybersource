@@ -31,7 +31,7 @@ class OrderStepAmountConfirmed extends OrderStep implements OrderStepInterface
 {
     protected $emailClassName = OrderInvoiceEmail::class;
 
-    private static $table_name = 'OrderStepAmountConfirmed';
+    private static $table_name = 'OrderStepAmountConfirmedCS';
 
     private static $custom_exceptions_class = '';
 
