@@ -173,6 +173,13 @@ class CyberSourcePayment extends EcommercePayment
             $currency = EcommercePayment::site_currency();
         }
 
+        if ($this->hasRandomDeduction()) {
+            $randomDeduction = $this->setAndReturnRandomDeduction();
+            if ($randomDeduction) {
+                $amount -= $randomDeduction;
+            }
+        }
+
         $url = $this->getURL();
         $params = $this->getParams($amount, $currency);
         $csform = $this->CyberSourceForm($url, $params);
@@ -192,5 +199,15 @@ class CyberSourcePayment extends EcommercePayment
     {
         // TODO: Expand this logic to check whether test or production, potentially add a .env var to set this
         return 'https://testsecureacceptance.cybersource.com/pay';
+    }
+
+    protected function hasRandomDeduction(): bool
+    {
+        return false;
+    }
+
+    protected function setAndReturnRandomDeduction(): float
+    {
+        return 0;
     }
 }
