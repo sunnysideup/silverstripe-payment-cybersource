@@ -60,7 +60,7 @@ class OrderStepAmountConfirmed extends OrderStep implements OrderStepInterface
         //that ist he code PAID means that the Order has been paid ONCE this step is completed
         'CustomerCanPay' => 0,
         'Name' => 'Confirm Amount',
-        'Code' => 'AMOUNTCONFIRMED',
+        'Code' => 'AMOUNTCONFIRMEDCS',
         'ShowAsInProcessOrder' => 1,
         'Explanation' => '
             <p>
