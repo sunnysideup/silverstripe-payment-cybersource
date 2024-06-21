@@ -167,7 +167,7 @@ class OrderStepAmountConfirmed extends OrderStep implements OrderStepInterface
 
     public function hasBeenDone(Order $order): bool
     {
-        return $this->stillToDo($order) ? false : true;
+        return !$this->stillToDo($order);
     }
 
     /**
@@ -213,10 +213,8 @@ class OrderStepAmountConfirmed extends OrderStep implements OrderStepInterface
             }
         }
         foreach ($order->Payments() as $payment) {
-            if ($payment) {
-                if ($payment instanceof CyberSourcePaymentRandomAmount) {
-                    return $payment->RandomDeduction > 0;
-                }
+            if ($payment instanceof CyberSourcePaymentRandomAmount) {
+                return $payment->RandomDeduction > 0;
             }
         }
 
