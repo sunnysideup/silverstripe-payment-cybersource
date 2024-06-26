@@ -197,8 +197,8 @@ class CyberSourcePayment extends EcommercePayment
 
     protected function getURL()
     {
-        // TODO: Expand this logic to check whether test or production, potentially add a .env var to set this
-        return 'https://testsecureacceptance.cybersource.com/pay';
+        //return 'https://testsecureacceptance.cybersource.com/pay';
+        return Environment::getEnv('CYBERSOURCE_URL');
     }
 
     protected function hasRandomDeduction(): bool
