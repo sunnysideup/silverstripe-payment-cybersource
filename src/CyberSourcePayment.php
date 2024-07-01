@@ -71,6 +71,7 @@ class CyberSourcePayment extends EcommercePayment
 
     // --- URL/PARAMS ---
     protected function getParams($amount, $currency) {
+        $order = $this->getOrderCached();
         $initialParams = [
             'access_key' => Environment::getEnv('CYBERSOURCE_ACCESS_KEY'),
             'profile_id' => Environment::getEnv('CYBERSOURCE_PROFILE_ID'),
@@ -80,7 +81,7 @@ class CyberSourcePayment extends EcommercePayment
             'locale' => i18n::get_locale(),
 
             'transaction_type' => 'authorization',
-            'reference_number' => $this->ID,
+            'reference_number' => $order->ID,
             'amount' => $amount,
             'currency' => $currency,
 
