@@ -80,7 +80,7 @@ class CyberSourcePayment extends EcommercePayment
             'signed_date_time' => gmdate("Y-m-d\TH:i:s\Z"),
             'locale' => i18n::get_locale(),
 
-            'transaction_type' => 'authorization',
+            'transaction_type' => Environment::getEnv('CYBERSOURCE_TRANSACTION_TYPE'),
             'reference_number' => $order->ID,
             'amount' => $amount,
             'currency' => $currency,
