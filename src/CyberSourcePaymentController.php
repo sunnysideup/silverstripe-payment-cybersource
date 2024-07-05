@@ -30,11 +30,11 @@ class CyberSourcePaymentController extends Controller
         /** @var CyberSourcePayment $payment */
         $payment = CyberSourcePayment::get_by_id($id);
 
-        if ($decision == 'CANCEL') {
+        /*if ($decision == 'CANCEL') {
             $order = $payment->getOrderCached();
             $order->Cancel(null, 'Cancelled during Cybersource Checkout');
             return $this->redirect('/');
-        }
+        }*/
 
         if (!$this->signatureCheck($_REQUEST)) {
             user_error('Transaction signature is incorrect', E_USER_WARNING);
