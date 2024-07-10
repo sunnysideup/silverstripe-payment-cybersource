@@ -256,6 +256,9 @@ class OrderStepAmountConfirmed extends OrderStep implements OrderStepInterface
 
     protected function AmountToBeConfirmed($order)
     {
+        /**
+         * @var  CyberSourcePaymentRandomAmount $firstPayment
+         */
         $firstPayment = $this->relevantPayments($order)->first();
         if ($firstPayment) {
             return $firstPayment->SettlementAmount;
