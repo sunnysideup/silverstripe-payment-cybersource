@@ -59,34 +59,57 @@ class CyberSourcePayment extends EcommercePayment
 
 
     // --- SECURITY ---
-    protected function sign($params) {
-        $signedFieldNames = explode(",",$params["signed_field_names"]);
+    protected function sign($params)
+    {
+        $signedFieldNames = explode(",", $params["signed_field_names"]);
         foreach ($signedFieldNames as $field) {
             $dataToSign[] = $field . "=" . $params[$field];
         }
-        $data = implode(",",$dataToSign);
+        $data = implode(",", $dataToSign);
 
         return base64_encode(hash_hmac('sha256', $data, Environment::getEnv('CYBERSOURCE_SECRET_KEY'), true));
     }
 
     // --- URL/PARAMS ---
-    protected function getParams($amount, $currency) {
+    protected function getParams($amount, $currency)
+    {
         $order = $this->getOrderCached();
+        $billingAddress = $order->getBillingAddress();
+        $shippingAddress = $order->getShippingAddress();
         $initialParams = [
             'access_key' => Environment::getEnv('CYBERSOURCE_ACCESS_KEY'),
             'profile_id' => Environment::getEnv('CYBERSOURCE_PROFILE_ID'),
             'transaction_uuid' => $this->ID,
-            'unsigned_field_names' => '',
+            // 'unsigned_field_names' => '', // not sure what this is for
             'signed_date_time' => gmdate("Y-m-d\TH:i:s\Z"),
             'locale' => i18n::get_locale(),
-
             'transaction_type' => Environment::getEnv('CYBERSOURCE_TRANSACTION_TYPE'),
             'reference_number' => $order->ID,
             'amount' => $amount,
             'currency' => $currency,
-
-            'signed_field_names' => 'access_key,profile_id,transaction_uuid,signed_field_names,unsigned_field_names,signed_date_time,locale,transaction_type,reference_number,amount,currency'
+            //allow_payment_token_update:
+            // Indicates whether the customer can update the billing, shipping, and payment information on  the order review page.
+            'allow_payment_token_update' => true,
+            'bill_to_forename' => implode(' ', array_filter([$billingAddress->Prefix, $billingAddress->FirstName,])),
+            'bill_to_surname' => $billingAddress->Surname,
+            'bill_to_address_line1' => $billingAddress->Address,
+            'bill_to_address_line2' => $billingAddress->Address2,
+            'bill_to_address_city' => $billingAddress->City,
+            'bill_to_address_postal_code' => $billingAddress->PostalCode,
+            'bill_to_address_country' => $billingAddress->Country,
+            'bill_to_email' => $billingAddress->Email,
+            'bill_to_phone' => $billingAddress->Phone,
+            'bill_to_company_name' => $billingAddress->CompanyName,
+            'ship_to_forename' => implode(' ', array_filter([$shippingAddress->ShippingPrefix, $shippingAddress->ShippingFirstName,])),
+            'ship_to_surname' => $shippingAddress->ShippingSurname,
+            'ship_to_address_line1' => $shippingAddress->ShippingAddress,
+            'ship_to_address_line2' => $shippingAddress->ShippingAddress2,
+            'ship_to_address_city' => $shippingAddress->ShippingCity,
+            'ship_to_address_postal_code' => $shippingAddress->ShippingPostalCode,
+            'ship_to_address_country' => $shippingAddress->ShippingCountry,
+            'ship_to_phone' => $shippingAddress->ShippingPhone,
         ];
+        $initialParams['signed_field_names'] = implode(',', $initialParams['signed_field_names']);
 
         $signature = $this->sign($initialParams);
         $initialParams['signature'] = $signature;
@@ -121,7 +144,7 @@ class CyberSourcePayment extends EcommercePayment
             $formHTML .= '<input type="hidden" id="'.$param.'" name="'.$param.'" value="'.$value.'" />';
         }
 
-        $formHTML .= 
+        $formHTML .=
             '<input type="submit" id="submit" value="Confirm"/>
             </form>
             <script type="text/javascript">
