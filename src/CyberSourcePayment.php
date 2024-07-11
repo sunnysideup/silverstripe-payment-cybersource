@@ -63,6 +63,13 @@ class CyberSourcePayment extends EcommercePayment
     {
         $order = $this->getOrderCached();
         $billingAddress = $order->CreateOrReturnExistingAddress(BillingAddress::class);
+        if ($order->IsSeparateShippingAddress()) {
+            $shippingAddress = $order->ShippingAddress();
+            $shippingAddress->setFieldsToMatchBillingAddress();
+        } else {
+            //if shipping address is the same as billing address, use the billing address
+            $shippingAddress = $billingAddress;
+        }
         $shippingAddress = $order->CreateOrReturnExistingAddress(ShippingAddress::class);
         $initialParams = [
             'access_key' => Environment::getEnv('CYBERSOURCE_ACCESS_KEY'),
@@ -90,14 +97,14 @@ class CyberSourcePayment extends EcommercePayment
             'bill_to_company_name' => $billingAddress->CompanyName,
             // 'bill_to_email' => $billingAddress->Email,
 
-            'ship_to_forename' => implode(' ', array_filter([$shippingAddress->ShippingPrefix, $shippingAddress->ShippingFirstName,])),
-            'ship_to_surname' => $shippingAddress->ShippingSurname,
-            'ship_to_address_line1' => $shippingAddress->ShippingAddress,
-            'ship_to_address_line2' => $shippingAddress->ShippingAddress2,
-            'ship_to_address_city' => $shippingAddress->ShippingCity,
-            'ship_to_address_postal_code' => $shippingAddress->ShippingPostalCode,
-            'ship_to_address_country' => $shippingAddress->ShippingCountry,
-            'ship_to_phone' => $shippingAddress->ShippingPhone,
+            'ship_to_forename' => implode(' ', array_filter([$shippingAddress->Prefix, $shippingAddress->FirstName,])),
+            'ship_to_surname' => $shippingAddress->Surname,
+            'ship_to_address_line1' => $shippingAddress->Address,
+            'ship_to_address_line2' => $shippingAddress->Address2,
+            'ship_to_address_city' => $shippingAddress->City,
+            'ship_to_address_postal_code' => $shippingAddress->PostalCode,
+            'ship_to_address_country' => $shippingAddress->Country,
+            'ship_to_phone' => $shippingAddress->Phone,
         ];
         $initialParams['signed_field_names'] = implode(',', array_keys($initialParams));
 
