@@ -141,14 +141,23 @@ class CyberSourcePayment extends EcommercePayment
         }
 
         $formHTML .=
-            '<input type="submit" id="submit" value="Confirm"/>
-            </form>
-            <script type="text/javascript">
-                document.addEventListener("DOMContentLoaded", function() {
-                    // document.getElementById("submit").click();
-                });
-            </script>
-            <style>#submit { display: block; }</style>';
+            '
+<form>
+    <input type="submit" id="submit" value="Confirm"/>
+</form>
+<script type="text/javascript">
+    document.addEventListener("DOMContentLoaded", function() {
+        document.getElementById("submit").click();
+    });
+</script>
+<style>
+    #submit {
+        display: none;
+    }
+</style>
+
+
+            ';
 
         return DBField::create_field(
             'HTMLText',
@@ -210,7 +219,6 @@ class CyberSourcePayment extends EcommercePayment
         $page->Form = $csform;
         $controller = new ContentController($page);
         Requirements::clear();
-        Requirements::javascript('https://ajax.googleapis.com/ajax/libs/jquery/3.6.1/jquery.min.js');
 
         return EcommercePaymentProcessing::create($controller->RenderWith('Sunnysideup\Ecommerce\PaymentProcessingPage'));
     }
