@@ -4,23 +4,20 @@ namespace Sunnysideup\PaymentCyberSource;
 
 use SilverStripe\CMS\Controllers\ContentController;
 use SilverStripe\CMS\Model\SiteTree;
-use SilverStripe\Control\Email\Email;
-use SilverStripe\Core\Config\Config;
 use SilverStripe\Core\Manifest\ModuleResourceLoader;
 use SilverStripe\Forms\FieldList;
 use SilverStripe\Forms\Form;
 use SilverStripe\Forms\LiteralField;
-use SilverStripe\Forms\ReadonlyField;
 use SilverStripe\ORM\FieldType\DBField;
-use SilverStripe\ORM\FieldType\DBMoney;
 use SilverStripe\View\Requirements;
 use Sunnysideup\Ecommerce\Forms\OrderForm;
 use Sunnysideup\Ecommerce\Model\Money\EcommercePayment;
 use Sunnysideup\Ecommerce\Model\Order;
-use Sunnysideup\Ecommerce\Money\Payment\PaymentResults\EcommercePaymentFailure;
 use Sunnysideup\Ecommerce\Money\Payment\PaymentResults\EcommercePaymentProcessing;
 use SilverStripe\Core\Environment;
 use SilverStripe\i18n\i18n;
+use Sunnysideup\Ecommerce\Model\Address\BillingAddress;
+use Sunnysideup\Ecommerce\Model\Address\ShippingAddress;
 
 class CyberSourcePayment extends EcommercePayment
 {
@@ -74,13 +71,13 @@ class CyberSourcePayment extends EcommercePayment
     protected function getParams($amount, $currency)
     {
         $order = $this->getOrderCached();
-        $billingAddress = $order->getBillingAddress();
-        $shippingAddress = $order->getShippingAddress();
+        $billingAddress = $order->CreateOrReturnExistingAddress(BillingAddress::class);
+        $shippingAddress = $order->CreateOrReturnExistingAddress(ShippingAddress::class);
         $initialParams = [
             'access_key' => Environment::getEnv('CYBERSOURCE_ACCESS_KEY'),
             'profile_id' => Environment::getEnv('CYBERSOURCE_PROFILE_ID'),
             'transaction_uuid' => $this->ID,
-            // 'unsigned_field_names' => '', // not sure what this is for
+            'unsigned_field_names' => '', // not sure what this is for
             'signed_date_time' => gmdate("Y-m-d\TH:i:s\Z"),
             'locale' => i18n::get_locale(),
             'transaction_type' => Environment::getEnv('CYBERSOURCE_TRANSACTION_TYPE'),
@@ -89,30 +86,29 @@ class CyberSourcePayment extends EcommercePayment
             'currency' => $currency,
             //allow_payment_token_update:
             // Indicates whether the customer can update the billing, shipping, and payment information on  the order review page.
-            'allow_payment_token_update' => true,
-            'bill_to_forename' => implode(' ', array_filter([$billingAddress->Prefix, $billingAddress->FirstName,])),
-            'bill_to_surname' => $billingAddress->Surname,
-            'bill_to_address_line1' => $billingAddress->Address,
-            'bill_to_address_line2' => $billingAddress->Address2,
-            'bill_to_address_city' => $billingAddress->City,
-            'bill_to_address_postal_code' => $billingAddress->PostalCode,
-            'bill_to_address_country' => $billingAddress->Country,
-            'bill_to_email' => $billingAddress->Email,
-            'bill_to_phone' => $billingAddress->Phone,
-            'bill_to_company_name' => $billingAddress->CompanyName,
-            'ship_to_forename' => implode(' ', array_filter([$shippingAddress->ShippingPrefix, $shippingAddress->ShippingFirstName,])),
-            'ship_to_surname' => $shippingAddress->ShippingSurname,
-            'ship_to_address_line1' => $shippingAddress->ShippingAddress,
-            'ship_to_address_line2' => $shippingAddress->ShippingAddress2,
-            'ship_to_address_city' => $shippingAddress->ShippingCity,
-            'ship_to_address_postal_code' => $shippingAddress->ShippingPostalCode,
-            'ship_to_address_country' => $shippingAddress->ShippingCountry,
-            'ship_to_phone' => $shippingAddress->ShippingPhone,
+            // 'allow_payment_token_update' => true,
+            // 'bill_to_forename' => implode(' ', array_filter([$billingAddress->Prefix, $billingAddress->FirstName,])),
+            // 'bill_to_surname' => $billingAddress->Surname,
+            // 'bill_to_address_line1' => $billingAddress->Address,
+            // 'bill_to_address_line2' => $billingAddress->Address2,
+            // 'bill_to_address_city' => $billingAddress->City,
+            // 'bill_to_address_postal_code' => $billingAddress->PostalCode,
+            // 'bill_to_address_country' => $billingAddress->Country,
+            // // 'bill_to_email' => $billingAddress->Email,
+            // 'bill_to_phone' => $billingAddress->Phone,
+            // 'bill_to_company_name' => $billingAddress->CompanyName,
+            // 'ship_to_forename' => implode(' ', array_filter([$shippingAddress->ShippingPrefix, $shippingAddress->ShippingFirstName,])),
+            // 'ship_to_surname' => $shippingAddress->ShippingSurname,
+            // 'ship_to_address_line1' => $shippingAddress->ShippingAddress,
+            // 'ship_to_address_line2' => $shippingAddress->ShippingAddress2,
+            // 'ship_to_address_city' => $shippingAddress->ShippingCity,
+            // 'ship_to_address_postal_code' => $shippingAddress->ShippingPostalCode,
+            // 'ship_to_address_country' => $shippingAddress->ShippingCountry,
+            // 'ship_to_phone' => $shippingAddress->ShippingPhone,
         ];
-        $initialParams['signed_field_names'] = implode(',', $initialParams['signed_field_names']);
+        $initialParams['signed_field_names'] = implode(',', array_keys($initialParams));
 
-        $signature = $this->sign($initialParams);
-        $initialParams['signature'] = $signature;
+        $initialParams['signature'] = $this->sign($initialParams);
 
         return $initialParams;
     }
@@ -149,10 +145,10 @@ class CyberSourcePayment extends EcommercePayment
             </form>
             <script type="text/javascript">
                 document.addEventListener("DOMContentLoaded", function() {
-                    document.getElementById("submit").click();
+                    // document.getElementById("submit").click();
                 });
             </script>
-            <style>#submit { display: none; }</style>';
+            <style>#submit { display: block; }</style>';
 
         return DBField::create_field(
             'HTMLText',
