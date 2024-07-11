@@ -10,7 +10,6 @@ use SilverStripe\Forms\Form;
 use SilverStripe\Forms\LiteralField;
 use SilverStripe\ORM\FieldType\DBField;
 use SilverStripe\View\Requirements;
-use Sunnysideup\Ecommerce\Forms\OrderForm;
 use Sunnysideup\Ecommerce\Model\Money\EcommercePayment;
 use Sunnysideup\Ecommerce\Model\Order;
 use Sunnysideup\Ecommerce\Money\Payment\PaymentResults\EcommercePaymentProcessing;
@@ -18,12 +17,14 @@ use SilverStripe\Core\Environment;
 use SilverStripe\i18n\i18n;
 use Sunnysideup\Ecommerce\Model\Address\BillingAddress;
 use Sunnysideup\Ecommerce\Model\Address\ShippingAddress;
+use Sunnysideup\PaymentCyberSource\Api\SignatureCheck;
 
 class CyberSourcePayment extends EcommercePayment
 {
     private static $table_name = 'CyberSourcePayment';
 
     private static $db = [
+        'Decision' => 'Text',
     ];
 
 
@@ -55,17 +56,7 @@ class CyberSourcePayment extends EcommercePayment
     private static $logo = 'sunnysideup/payment-cybersource: client/images/cybersourcelogo.png';
 
 
-    // --- SECURITY ---
-    protected function sign($params)
-    {
-        $signedFieldNames = explode(",", $params["signed_field_names"]);
-        foreach ($signedFieldNames as $field) {
-            $dataToSign[] = $field . "=" . $params[$field];
-        }
-        $data = implode(",", $dataToSign);
 
-        return base64_encode(hash_hmac('sha256', $data, Environment::getEnv('CYBERSOURCE_SECRET_KEY'), true));
-    }
 
     // --- URL/PARAMS ---
     protected function getParams($amount, $currency)
@@ -77,7 +68,8 @@ class CyberSourcePayment extends EcommercePayment
             'access_key' => Environment::getEnv('CYBERSOURCE_ACCESS_KEY'),
             'profile_id' => Environment::getEnv('CYBERSOURCE_PROFILE_ID'),
             'transaction_uuid' => $this->ID,
-            'unsigned_field_names' => '', // not sure what this is for
+            'signed_field_names' => '',
+            'unsigned_field_names' => '', // just to confirm
             'signed_date_time' => gmdate("Y-m-d\TH:i:s\Z"),
             'locale' => i18n::get_locale(),
             'transaction_type' => Environment::getEnv('CYBERSOURCE_TRANSACTION_TYPE'),
@@ -87,28 +79,29 @@ class CyberSourcePayment extends EcommercePayment
             //allow_payment_token_update:
             // Indicates whether the customer can update the billing, shipping, and payment information on  the order review page.
             // 'allow_payment_token_update' => true,
-            // 'bill_to_forename' => implode(' ', array_filter([$billingAddress->Prefix, $billingAddress->FirstName,])),
-            // 'bill_to_surname' => $billingAddress->Surname,
-            // 'bill_to_address_line1' => $billingAddress->Address,
-            // 'bill_to_address_line2' => $billingAddress->Address2,
-            // 'bill_to_address_city' => $billingAddress->City,
-            // 'bill_to_address_postal_code' => $billingAddress->PostalCode,
-            // 'bill_to_address_country' => $billingAddress->Country,
-            // // 'bill_to_email' => $billingAddress->Email,
-            // 'bill_to_phone' => $billingAddress->Phone,
-            // 'bill_to_company_name' => $billingAddress->CompanyName,
-            // 'ship_to_forename' => implode(' ', array_filter([$shippingAddress->ShippingPrefix, $shippingAddress->ShippingFirstName,])),
-            // 'ship_to_surname' => $shippingAddress->ShippingSurname,
-            // 'ship_to_address_line1' => $shippingAddress->ShippingAddress,
-            // 'ship_to_address_line2' => $shippingAddress->ShippingAddress2,
-            // 'ship_to_address_city' => $shippingAddress->ShippingCity,
-            // 'ship_to_address_postal_code' => $shippingAddress->ShippingPostalCode,
-            // 'ship_to_address_country' => $shippingAddress->ShippingCountry,
-            // 'ship_to_phone' => $shippingAddress->ShippingPhone,
+            'bill_to_forename' => implode(' ', array_filter([$billingAddress->Prefix, $billingAddress->FirstName,])),
+            'bill_to_surname' => $billingAddress->Surname,
+            'bill_to_address_line1' => $billingAddress->Address,
+            'bill_to_address_line2' => $billingAddress->Address2,
+            'bill_to_address_city' => $billingAddress->City,
+            'bill_to_address_postal_code' => $billingAddress->PostalCode,
+            'bill_to_address_country' => $billingAddress->Country,
+            'bill_to_phone' => $billingAddress->Phone,
+            'bill_to_company_name' => $billingAddress->CompanyName,
+            // 'bill_to_email' => $billingAddress->Email,
+
+            'ship_to_forename' => implode(' ', array_filter([$shippingAddress->ShippingPrefix, $shippingAddress->ShippingFirstName,])),
+            'ship_to_surname' => $shippingAddress->ShippingSurname,
+            'ship_to_address_line1' => $shippingAddress->ShippingAddress,
+            'ship_to_address_line2' => $shippingAddress->ShippingAddress2,
+            'ship_to_address_city' => $shippingAddress->ShippingCity,
+            'ship_to_address_postal_code' => $shippingAddress->ShippingPostalCode,
+            'ship_to_address_country' => $shippingAddress->ShippingCountry,
+            'ship_to_phone' => $shippingAddress->ShippingPhone,
         ];
         $initialParams['signed_field_names'] = implode(',', array_keys($initialParams));
 
-        $initialParams['signature'] = $this->sign($initialParams);
+        $initialParams['signature'] = SignatureCheck::sign($initialParams);
 
         return $initialParams;
     }
