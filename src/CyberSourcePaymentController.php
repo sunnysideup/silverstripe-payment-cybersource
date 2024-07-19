@@ -48,7 +48,7 @@ class CyberSourcePaymentController extends Controller
                 $payment->SettlementAmount->Currency = $currency;
                 $payment->Decision = $decision;
                 $payment->write();
-                $payment->redirectToOrder();
+                return $payment->redirectToOrder();
             } else {
                 user_error('could not find payment with matching ID', E_USER_ERROR);
             }
