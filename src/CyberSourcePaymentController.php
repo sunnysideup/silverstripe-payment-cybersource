@@ -3,6 +3,7 @@
 namespace Sunnysideup\PaymentCyberSource;
 
 use SilverStripe\Control\Controller;
+use Sunnysideup\Ecommerce\Api\ShoppingCart;
 use Sunnysideup\Ecommerce\Model\Money\EcommercePayment;
 use Sunnysideup\PaymentCyberSource\Api\SignatureCheck;
 
@@ -22,7 +23,7 @@ class CyberSourcePaymentController extends Controller
     {
         $request = $this->getRequest();
         $id = (int) $request->requestVar('req_transaction_uuid');
-        $reasonCode = $request->requestVar('reason_code');
+        $reasonCode = (int) $request->requestVar('reason_code');
         $authAmount = $request->requestVar('auth_amount');
         $currency = $request->requestVar('req_currency');
         $decision = $request->requestVar('decision');
@@ -36,24 +37,20 @@ class CyberSourcePaymentController extends Controller
             return $this->redirect('/');
         }*/
 
-        if (SignatureCheck::signature_check($_REQUEST)) {
-            if ($payment) {
-                if (100 === intval($reasonCode)) {
-                    $payment->Status = EcommercePayment::SUCCESS_STATUS;
-                } else {
-                    $payment->Status = EcommercePayment::FAILURE_STATUS;
-                }
-
-                $payment->SettlementAmount->Amount = $authAmount;
-                $payment->SettlementAmount->Currency = $currency;
-                $payment->Decision = $decision;
-                $payment->write();
-                return $payment->redirectToOrder();
+        if ($payment) {
+            if (100 === intval($reasonCode) && SignatureCheck::signature_check($_REQUEST)) {
+                $payment->Status = EcommercePayment::SUCCESS_STATUS;
             } else {
-                user_error('could not find payment with matching ID', E_USER_ERROR);
+                $payment->Status = EcommercePayment::FAILURE_STATUS;
             }
+
+            $payment->SettlementAmount->Amount = $authAmount;
+            $payment->SettlementAmount->Currency = $currency;
+            $payment->Decision = $decision;
+            $payment->write();
+            return $payment->redirectToOrder();
         } else {
-            user_error('Transaction signature is incorrect', E_USER_ERROR);
+            return ShoppingCart::current_order()->redirectToOrder();
         }
     }
 
