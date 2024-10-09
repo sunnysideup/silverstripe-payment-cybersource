@@ -50,7 +50,12 @@ class CyberSourcePaymentController extends Controller
             $payment->write();
             return $payment->redirectToOrder();
         } else {
-            return ShoppingCart::current_order()->redirectToOrder();
+            $order = $this->getOrderCached();
+            if ($order) {
+                return Controller::curr()->redirect($order->getRedirectLink());
+            } else {
+                return Controller::curr()->redirect('/');
+            }
         }
     }
 
