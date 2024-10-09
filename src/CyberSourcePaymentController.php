@@ -5,6 +5,7 @@ namespace Sunnysideup\PaymentCyberSource;
 use SilverStripe\Control\Controller;
 use Sunnysideup\Ecommerce\Api\ShoppingCart;
 use Sunnysideup\Ecommerce\Model\Money\EcommercePayment;
+use Sunnysideup\Ecommerce\Model\Order;
 use Sunnysideup\PaymentCyberSource\Api\SignatureCheck;
 
 /**
@@ -50,7 +51,7 @@ class CyberSourcePaymentController extends Controller
             $payment->write();
             return $payment->redirectToOrder();
         } else {
-            $order = $this->getOrderCached();
+            $order = Order::get_order_cached();
             if ($order) {
                 return Controller::curr()->redirect($order->getRedirectLink());
             } else {
