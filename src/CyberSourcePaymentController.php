@@ -3,10 +3,10 @@
 namespace Sunnysideup\PaymentCyberSource;
 
 use SilverStripe\Control\Controller;
-use Sunnysideup\Ecommerce\Api\ShoppingCart;
+use SilverStripe\Control\Director;
 use Sunnysideup\Ecommerce\Model\Money\EcommercePayment;
-use Sunnysideup\Ecommerce\Model\Order;
 use Sunnysideup\PaymentCyberSource\Api\SignatureCheck;
+use Exception;
 
 /**
  * Class \Sunnysideup\PaymentCyberSource\CyberSourcePaymentController
@@ -18,45 +18,66 @@ class CyberSourcePaymentController extends Controller
         'returned',
     ];
 
+    protected $debug = false;
+
     private static $url_segment = 'cybersourcepayment';
 
     public function returned()
     {
         $request = $this->getRequest();
         $id = (int) $request->requestVar('req_transaction_uuid');
+        $orderID = (int) $request->requestVar('req_reference_number');
         $reasonCode = (int) $request->requestVar('reason_code');
         $authAmount = $request->requestVar('auth_amount');
         $currency = $request->requestVar('req_currency');
         $decision = $request->requestVar('decision');
-
+        if ($this->debug) {
+            file_put_contents(
+                Director::baseFolder() .'/cybersourcepayment.log',
+                print_r(
+                    $request->requestVars(),
+                    true
+                ),
+                FILE_APPEND
+            );
+        }
         /** @var CyberSourcePayment $payment */
-        $payment = CyberSourcePayment::get_by_id($id);
-
-        /*if ($decision == 'CANCEL') {
-            $order = $payment->getOrderCached();
-            $order->Cancel(null, 'Cancelled during Cybersource Checkout');
-            return $this->redirect('/');
-        }*/
+        $payment = CyberSourcePayment::get()->filter(['ID' => $id, 'OrderID' => $orderID])->first();
 
         if ($payment) {
-            if (100 === intval($reasonCode) && SignatureCheck::signature_check($_REQUEST)) {
-                $payment->Status = EcommercePayment::SUCCESS_STATUS;
-            } else {
-                $payment->Status = EcommercePayment::FAILURE_STATUS;
+            try {
+                if ($decision === 'ACCEPT' && SignatureCheck::signature_check($_REQUEST)) {
+                    $payment->Status = EcommercePayment::SUCCESS_STATUS;
+                } else {
+                    $payment->Status = EcommercePayment::FAILURE_STATUS;
+                }
+
+                $payment->SettlementAmount->Amount = $authAmount;
+                $payment->SettlementAmount->Currency = $currency;
+                $payment->Decision = $$reasonCode . ' - ' .$decision;
+                $payment->write();
+                return $payment->redirectToOrder();
+
+            } catch (Exception $e) {
+                print_r($e->getMessage(), 1);
+                // do nothing
+                file_put_contents(
+                    Director::baseFolder() .'/cybersourcepayment.error.log',
+                    print_r($e->getMessage(), 1),
+                    FILE_APPEND
+                );
+                file_put_contents(
+                    Director::baseFolder() .'/cybersourcepayment.error.log',
+                    print_r(
+                        $request->requestVars(),
+                        true
+                    ),
+                    FILE_APPEND
+                );
             }
 
-            $payment->SettlementAmount->Amount = $authAmount;
-            $payment->SettlementAmount->Currency = $currency;
-            $payment->Decision = $decision;
-            $payment->write();
-            return $payment->redirectToOrder();
         } else {
-            $order = Order::get_order_cached();
-            if ($order) {
-                return Controller::curr()->redirect($order->getRedirectLink());
-            } else {
-                return Controller::curr()->redirect('/');
-            }
+            return $this->httpError(404, 'Payment not found');
         }
     }
 
