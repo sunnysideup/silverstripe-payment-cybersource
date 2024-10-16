@@ -54,7 +54,7 @@ class CyberSourcePaymentController extends Controller
 
                 $payment->SettlementAmount->Amount = $authAmount;
                 $payment->SettlementAmount->Currency = $currency;
-                $payment->Decision = $$reasonCode . ' - ' .$decision;
+                $payment->Decision = $reasonCode . ' - ' .$decision;
                 $payment->write();
                 return $payment->redirectToOrder();
 
