@@ -152,10 +152,10 @@ class OrderStepAmountConfirmed extends OrderStep implements OrderStepInterface
     {
         $adminOnlyOrToEmail = ! (bool) $this->SendMessageToCustomer;
         if (true === $this->stillToDo($order)) {
-            $this->sendEmailForStep(
+            return $this->sendEmailForStep(
                 $order,
-                $subject = $this->EmailSubject ?: 'Confirm Paid Amount',
-                $this->CalculatedCustomerMessage(),
+                (string) $subject = $this->EmailSubject ?: 'Confirm Paid Amount',
+                (string) $this->CalculatedCustomerMessage(),
                 $resend = false,
                 $adminOnlyOrToEmail,
                 $this->getEmailClassName()
